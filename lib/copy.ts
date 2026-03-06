@@ -20,20 +20,20 @@ const OPENING_LINES = [
 
 const EARTHQUAKE_FRAMES: Record<string, string[]> = {
   micro: [
-    "A quiet {MAGNITUDE} tremor rippled through {LOCATION}, {DISTANCE_DESCRIPTION}. Barely enough to rattle a cup.",
-    "The ground shifted near {LOCATION} — a {MAGNITUDE}, {DISTANCE_DESCRIPTION}. The planet stretching in its sleep.",
+    "A quiet {MAGNITUDE} tremor rippled near {LOCATION}. Barely enough to rattle a cup.",
+    "The ground shifted near {LOCATION} — magnitude {MAGNITUDE}. The planet stretching in its sleep.",
   ],
   minor: [
-    "A {MAGNITUDE} earthquake rolled through {LOCATION}, {DISTANCE_DESCRIPTION}. People paused, then went back to what they were doing.",
-    "The ground shook near {LOCATION} — magnitude {MAGNITUDE}, {DISTANCE_DESCRIPTION}. Enough to notice, not enough to stop.",
+    "A {MAGNITUDE} earthquake rolled through {LOCATION}. People paused, then went back to what they were doing.",
+    "The ground shook near {LOCATION} — magnitude {MAGNITUDE}. Enough to notice, not enough to stop.",
   ],
   moderate: [
-    "A {MAGNITUDE} earthquake shook {LOCATION}, {DISTANCE_DESCRIPTION}. Strong enough to wake people up.",
-    "The ground broke open near {LOCATION} — magnitude {MAGNITUDE}, {DISTANCE_DESCRIPTION}. The kind that makes the news briefly.",
+    "A {MAGNITUDE} earthquake shook {LOCATION}. Strong enough to wake people up.",
+    "The ground broke open near {LOCATION} — magnitude {MAGNITUDE}. The kind that makes the news briefly.",
   ],
   strong: [
-    "A significant {MAGNITUDE} earthquake struck {LOCATION}, {DISTANCE_DESCRIPTION}. The earth made its presence known.",
-    "The ground shook hard in {LOCATION}. Magnitude {MAGNITUDE}. {DISTANCE_DESCRIPTION}. Some days ask more of the world than others.",
+    "A significant {MAGNITUDE} earthquake struck {LOCATION}. The earth made its presence known.",
+    "The ground shook hard in {LOCATION}. Magnitude {MAGNITUDE}. Some days ask more of the world than others.",
   ],
 };
 
