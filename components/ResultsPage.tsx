@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import type { BriefingData } from "@/lib/types";
 import SeismographLine from "@/components/svg/SeismographLine";
 import WorldMapOutline from "@/components/svg/WorldMapOutline";
 import { useCountUp } from "@/hooks/useCountUp";
+import { useInView } from "@/hooks/useInView";
 import {
   formatEarthquake,
   getNoEarthquakeLine,
@@ -17,16 +17,32 @@ interface ResultsPageProps {
   onShare: () => void;
 }
 
+/* ─── Scroll-reveal wrapper ─── */
+function RevealSection({
+  children,
+  animation,
+  className = "",
+  style,
+}: {
+  children: React.ReactNode;
+  animation: string;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  const { ref, inView } = useInView(0.12);
+
+  return (
+    <div
+      ref={ref}
+      className={`scroll-reveal ${animation} ${inView ? "in-view" : ""} ${className}`}
+      style={style}
+    >
+      {children}
+    </div>
+  );
+}
+
 export default function ResultsPage({ data, onShare }: ResultsPageProps) {
-  const [visibleSections, setVisibleSections] = useState(0);
-
-  useEffect(() => {
-    const timers = Array.from({ length: 8 }, (_, i) =>
-      setTimeout(() => setVisibleSections(i + 1), i * 300)
-    );
-    return () => timers.forEach(clearTimeout);
-  }, []);
-
   const formattedDate = new Date(data.date + "T12:00:00").toLocaleDateString(
     "en-US",
     { year: "numeric", month: "long", day: "numeric" }
@@ -37,152 +53,62 @@ export default function ResultsPage({ data, onShare }: ResultsPageProps) {
   return (
     <div className="max-w-2xl mx-auto px-6 py-12 space-y-10">
       {/* Header */}
-      {visibleSections >= 1 && (
-        <header
-          className="animate-scale-blur-in rounded-xl py-12 px-8 -mx-6 text-center"
-          style={{ backgroundColor: "var(--accent-light)" }}
+      <RevealSection
+        animation="reveal-scale-blur"
+        className="rounded-xl py-12 px-8 -mx-6 text-center"
+        style={{ backgroundColor: "var(--accent-light)" }}
+      >
+        <h1
+          className="text-5xl md:text-5xl font-semibold mb-2"
+          style={{
+            fontFamily: "var(--font-display)",
+            color: "var(--fg-heading)",
+            fontSize: "clamp(2rem, 6vw, 3rem)",
+          }}
         >
-          <h1
-            className="text-5xl md:text-5xl font-semibold mb-2"
+          {formattedDate}
+        </h1>
+        {data.label && (
+          <p
+            className="text-sm"
             style={{
-              fontFamily: "var(--font-display)",
-              color: "var(--fg-heading)",
-              fontSize: "clamp(2rem, 6vw, 3rem)",
+              fontFamily: "var(--font-sans)",
+              color: "var(--fg-muted)",
             }}
           >
-            {formattedDate}
-          </h1>
-          {data.label && (
-            <p
-              className="text-sm"
-              style={{
-                fontFamily: "var(--font-sans)",
-                color: "var(--fg-muted)",
-              }}
-            >
-              {data.label}
-            </p>
-          )}
-        </header>
-      )}
+            {data.label}
+          </p>
+        )}
+      </RevealSection>
 
       {/* Earth */}
-      {visibleSections >= 2 && (
-        <section
-          className="animate-slide-from-left rounded-xl p-6 md:p-8"
-          style={{
-            background: "rgba(196, 67, 42, 0.04)",
-            borderLeft: "3px solid var(--quake)",
-          }}
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <span
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: "var(--quake)" }}
+      <RevealSection
+        animation="reveal-slide-left"
+        className="rounded-xl p-6 md:p-8"
+        style={{
+          background: "rgba(196, 67, 42, 0.04)",
+          borderLeft: "3px solid var(--quake)",
+        }}
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <span
+            className="w-2 h-2 rounded-full"
+            style={{ backgroundColor: "var(--quake)" }}
+          />
+          <span
+            className="font-mono text-xs font-semibold uppercase tracking-[0.15em]"
+            style={{ color: "var(--fg-muted)" }}
+          >
+            THE EARTH
+          </span>
+        </div>
+
+        {data.earthquake ? (
+          <>
+            <SeismographLine
+              magnitude={data.earthquake.magnitude}
+              animate={true}
             />
-            <span
-              className="font-mono text-xs font-semibold uppercase tracking-[0.15em]"
-              style={{ color: "var(--fg-muted)" }}
-            >
-              THE EARTH
-            </span>
-          </div>
-
-          {data.earthquake ? (
-            <>
-              <SeismographLine
-                magnitude={data.earthquake.magnitude}
-                animate={true}
-              />
-              <p
-                className="mt-4"
-                style={{
-                  fontSize: "1.25rem",
-                  lineHeight: 1.6,
-                  color: "var(--fg)",
-                }}
-              >
-                {formatEarthquake(data.earthquake, seed)}
-              </p>
-              <div className="flex flex-wrap gap-2 mt-4">
-                <span
-                  className="font-mono text-xs px-3 py-1 rounded-full"
-                  style={{
-                    backgroundColor: "var(--bg-surface)",
-                    color: "var(--fg-muted)",
-                  }}
-                >
-                  M{data.earthquake.magnitude.toFixed(1)}
-                </span>
-                <span
-                  className="font-mono text-xs px-3 py-1 rounded-full"
-                  style={{
-                    backgroundColor: "var(--bg-surface)",
-                    color: "var(--fg-muted)",
-                  }}
-                >
-                  {data.earthquake.location}
-                </span>
-              </div>
-            </>
-          ) : (
-            <p
-              className="italic"
-              style={{
-                fontSize: "1.25rem",
-                lineHeight: 1.6,
-                color: "var(--fg)",
-              }}
-            >
-              {getNoEarthquakeLine(seed)}
-            </p>
-          )}
-        </section>
-      )}
-
-      {/* Space */}
-      {visibleSections >= 3 && (
-        <section
-          className="animate-slide-from-right rounded-xl p-6 md:p-8"
-          style={{
-            background: "rgba(37, 99, 235, 0.04)",
-            borderLeft: "3px solid var(--orbital)",
-          }}
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <span
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: "var(--orbital)" }}
-            />
-            <span
-              className="font-mono text-xs font-semibold uppercase tracking-[0.15em]"
-              style={{ color: "var(--fg-muted)" }}
-            >
-              BEYOND
-            </span>
-          </div>
-
-          {data.iss && (
-            <>
-              <WorldMapOutline
-                issLat={data.iss.latitude}
-                issLon={data.iss.longitude}
-                animate={true}
-              />
-              <p
-                className="mt-4"
-                style={{
-                  fontSize: "1.25rem",
-                  lineHeight: 1.6,
-                  color: "var(--fg)",
-                }}
-              >
-                {formatISS(data.iss, data.crew, seed)}
-              </p>
-            </>
-          )}
-
-          {data.asteroid && (
             <p
               className="mt-4"
               style={{
@@ -191,24 +117,8 @@ export default function ResultsPage({ data, onShare }: ResultsPageProps) {
                 color: "var(--fg)",
               }}
             >
-              {formatAsteroid(data.asteroid, seed)}
+              {formatEarthquake(data.earthquake, seed)}
             </p>
-          )}
-
-          {!data.iss && !data.asteroid && (
-            <p
-              className="italic"
-              style={{
-                fontSize: "1.25rem",
-                lineHeight: 1.6,
-                color: "var(--fg)",
-              }}
-            >
-              No nearby asteroids or ISS data for this date.
-            </p>
-          )}
-
-          {(data.iss || data.asteroid) && (
             <div className="flex flex-wrap gap-2 mt-4">
               <span
                 className="font-mono text-xs px-3 py-1 rounded-full"
@@ -217,93 +127,194 @@ export default function ResultsPage({ data, onShare }: ResultsPageProps) {
                   color: "var(--fg-muted)",
                 }}
               >
-                17,500 mph
+                M{data.earthquake.magnitude.toFixed(1)}
               </span>
-              {data.crew && (
-                <span
-                  className="font-mono text-xs px-3 py-1 rounded-full"
-                  style={{
-                    backgroundColor: "var(--bg-surface)",
-                    color: "var(--fg-muted)",
-                  }}
-                >
-                  Crew of {data.crew.crew_count}
-                </span>
-              )}
+              <span
+                className="font-mono text-xs px-3 py-1 rounded-full"
+                style={{
+                  backgroundColor: "var(--bg-surface)",
+                  color: "var(--fg-muted)",
+                }}
+              >
+                {data.earthquake.location}
+              </span>
             </div>
-          )}
-        </section>
-      )}
+          </>
+        ) : (
+          <p
+            className="italic"
+            style={{
+              fontSize: "1.25rem",
+              lineHeight: 1.6,
+              color: "var(--fg)",
+            }}
+          >
+            {getNoEarthquakeLine(seed)}
+          </p>
+        )}
+      </RevealSection>
+
+      {/* Space */}
+      <RevealSection
+        animation="reveal-slide-right"
+        className="rounded-xl p-6 md:p-8"
+        style={{
+          background: "rgba(37, 99, 235, 0.04)",
+          borderLeft: "3px solid var(--orbital)",
+        }}
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <span
+            className="w-2 h-2 rounded-full"
+            style={{ backgroundColor: "var(--orbital)" }}
+          />
+          <span
+            className="font-mono text-xs font-semibold uppercase tracking-[0.15em]"
+            style={{ color: "var(--fg-muted)" }}
+          >
+            BEYOND
+          </span>
+        </div>
+
+        {data.iss && (
+          <>
+            <WorldMapOutline
+              issLat={data.iss.latitude}
+              issLon={data.iss.longitude}
+              animate={true}
+            />
+            <p
+              className="mt-4"
+              style={{
+                fontSize: "1.25rem",
+                lineHeight: 1.6,
+                color: "var(--fg)",
+              }}
+            >
+              {formatISS(data.iss, data.crew, seed)}
+            </p>
+          </>
+        )}
+
+        {data.asteroid && (
+          <p
+            className="mt-4"
+            style={{
+              fontSize: "1.25rem",
+              lineHeight: 1.6,
+              color: "var(--fg)",
+            }}
+          >
+            {formatAsteroid(data.asteroid, seed)}
+          </p>
+        )}
+
+        {!data.iss && !data.asteroid && (
+          <p
+            className="italic"
+            style={{
+              fontSize: "1.25rem",
+              lineHeight: 1.6,
+              color: "var(--fg)",
+            }}
+          >
+            No nearby asteroids or ISS data for this date.
+          </p>
+        )}
+
+        {(data.iss || data.asteroid) && (
+          <div className="flex flex-wrap gap-2 mt-4">
+            <span
+              className="font-mono text-xs px-3 py-1 rounded-full"
+              style={{
+                backgroundColor: "var(--bg-surface)",
+                color: "var(--fg-muted)",
+              }}
+            >
+              17,500 mph
+            </span>
+            {data.crew && (
+              <span
+                className="font-mono text-xs px-3 py-1 rounded-full"
+                style={{
+                  backgroundColor: "var(--bg-surface)",
+                  color: "var(--fg-muted)",
+                }}
+              >
+                Crew of {data.crew.crew_count}
+              </span>
+            )}
+          </div>
+        )}
+      </RevealSection>
 
       {/* World */}
-      {visibleSections >= 4 && (
-        <section
-          className="animate-fade-slide-up rounded-xl p-6 md:p-8"
-          style={{
-            background: "rgba(124, 58, 237, 0.04)",
-            borderLeft: "3px solid var(--timeline)",
-          }}
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <span
-              className="w-2 h-2 rounded-full"
-              style={{ backgroundColor: "var(--timeline)" }}
-            />
-            <span
-              className="font-mono text-xs font-semibold uppercase tracking-[0.15em]"
-              style={{ color: "var(--fg-muted)" }}
-            >
-              {data.wikipedia.length > 0 &&
-              data.wikipedia[0].year === new Date(data.date + "T12:00:00").getFullYear()
-                ? "THAT DAY"
-                : "ALSO ON THIS DAY"}
-            </span>
-          </div>
+      <RevealSection
+        animation="reveal-fade-up"
+        className="rounded-xl p-6 md:p-8"
+        style={{
+          background: "rgba(124, 58, 237, 0.04)",
+          borderLeft: "3px solid var(--timeline)",
+        }}
+      >
+        <div className="flex items-center gap-2 mb-4">
+          <span
+            className="w-2 h-2 rounded-full"
+            style={{ backgroundColor: "var(--timeline)" }}
+          />
+          <span
+            className="font-mono text-xs font-semibold uppercase tracking-[0.15em]"
+            style={{ color: "var(--fg-muted)" }}
+          >
+            {data.wikipedia.length > 0 &&
+            data.wikipedia[0].year === new Date(data.date + "T12:00:00").getFullYear()
+              ? "THAT DAY"
+              : "ALSO ON THIS DAY"}
+          </span>
+        </div>
 
-          <div className="space-y-4">
-            {data.wikipedia.slice(0, 3).map((event, i) => {
-              const selectedYear = new Date(data.date + "T12:00:00").getFullYear();
-              const isHistorical = event.year !== selectedYear;
-              return (
-                <p
-                  key={i}
-                  style={{
-                    fontSize: "1.125rem",
-                    lineHeight: 1.6,
-                    color: "var(--fg)",
-                  }}
-                >
-                  {isHistorical && (
-                    <span
-                      className="font-mono text-xs inline-flex items-center justify-center rounded-full px-2 py-0.5 mr-2 align-middle"
-                      style={{
-                        backgroundColor: "var(--accent)",
-                        color: "#ffffff",
-                      }}
-                    >
-                      {event.year}
-                    </span>
-                  )}
-                  {event.text}
-                </p>
-              );
-            })}
-          </div>
-        </section>
-      )}
+        <div className="space-y-4">
+          {data.wikipedia.slice(0, 3).map((event, i) => {
+            const selectedYear = new Date(data.date + "T12:00:00").getFullYear();
+            const isHistorical = event.year !== selectedYear;
+            return (
+              <p
+                key={i}
+                style={{
+                  fontSize: "1.125rem",
+                  lineHeight: 1.6,
+                  color: "var(--fg)",
+                }}
+              >
+                {isHistorical && (
+                  <span
+                    className="font-mono text-xs inline-flex items-center justify-center rounded-full px-2 py-0.5 mr-2 align-middle"
+                    style={{
+                      backgroundColor: "var(--accent)",
+                      color: "#ffffff",
+                    }}
+                  >
+                    {event.year}
+                  </span>
+                )}
+                {event.text}
+              </p>
+            );
+          })}
+        </div>
+      </RevealSection>
 
       {/* Numbers */}
-      {visibleSections >= 5 && (
-        <NumbersSection
-          birthsPerDay={data.demographics.births_per_day}
-          deathsPerDay={data.demographics.deaths_per_day}
-        />
-      )}
+      <NumbersSection
+        birthsPerDay={data.demographics.births_per_day}
+        deathsPerDay={data.demographics.deaths_per_day}
+      />
 
       {/* Sun */}
-      {visibleSections >= 6 && data.sun && (
-        <section
-          className="animate-slide-from-left rounded-xl p-6 md:p-8"
+      {data.sun && (
+        <RevealSection
+          animation="reveal-slide-left"
+          className="rounded-xl p-6 md:p-8"
           style={{
             background: "rgba(234, 179, 8, 0.06)",
             borderLeft: "3px solid #D97706",
@@ -356,13 +367,14 @@ export default function ResultsPage({ data, onShare }: ResultsPageProps) {
               </p>
             </div>
           </div>
-        </section>
+        </RevealSection>
       )}
 
       {/* Fun Facts */}
-      {visibleSections >= 7 && (data.number_fact || data.nasa_apod) && (
-        <section
-          className="animate-slide-from-right rounded-xl p-6 md:p-8"
+      {(data.number_fact || data.nasa_apod) && (
+        <RevealSection
+          animation="reveal-slide-right"
+          className="rounded-xl p-6 md:p-8"
           style={{
             background: "rgba(196, 93, 32, 0.04)",
             borderLeft: "3px solid var(--accent)",
@@ -421,7 +433,6 @@ export default function ResultsPage({ data, onShare }: ResultsPageProps) {
               className="rounded-lg overflow-hidden mt-2"
               style={{ backgroundColor: "var(--bg-surface)" }}
             >
-              {/* APOD image preview */}
               {data.nasa_apod.url && (
                 <a
                   href={data.nasa_apod.url}
@@ -465,75 +476,73 @@ export default function ResultsPage({ data, onShare }: ResultsPageProps) {
               </div>
             </div>
           )}
-        </section>
+        </RevealSection>
       )}
 
       {/* Closing */}
-      {visibleSections >= 8 && (
-        <section className="animate-slow-fade text-center py-16 space-y-8">
-          <p
-            className="text-2xl md:text-3xl italic"
+      <RevealSection animation="reveal-slow-fade" className="text-center py-16 space-y-8">
+        <p
+          className="text-2xl md:text-3xl italic"
+          style={{
+            fontFamily: "var(--font-display)",
+            color: "var(--fg-heading)",
+          }}
+        >
+          {data.closing_line.includes(". ") ? (
+            <>
+              {data.closing_line.split(". ")[0]}.
+              <br />
+              {data.closing_line.split(". ").slice(1).join(". ")}
+            </>
+          ) : (
+            data.closing_line
+          )}
+        </p>
+
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <button
+            onClick={onShare}
+            className="px-6 py-3 rounded-lg font-medium text-sm transition-opacity hover:opacity-90"
             style={{
-              fontFamily: "var(--font-display)",
-              color: "var(--fg-heading)",
+              backgroundColor: "var(--accent)",
+              color: "#ffffff",
             }}
           >
-            {data.closing_line.includes(". ") ? (
-              <>
-                {data.closing_line.split(". ")[0]}.
-                <br />
-                {data.closing_line.split(". ").slice(1).join(". ")}
-              </>
-            ) : (
-              data.closing_line
-            )}
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <button
-              onClick={onShare}
-              className="px-6 py-3 rounded-lg font-medium text-sm transition-opacity hover:opacity-90"
-              style={{
-                backgroundColor: "var(--accent)",
-                color: "#ffffff",
-              }}
-            >
-              Save your card
-            </button>
-            <button
-              onClick={onShare}
-              className="px-6 py-3 rounded-lg font-medium text-sm border transition-opacity hover:opacity-90"
-              style={{
-                borderColor: "var(--accent)",
-                color: "var(--accent)",
-                backgroundColor: "transparent",
-              }}
-            >
-              Share
-            </button>
-          </div>
-
-          <a
-            href="/"
-            className="inline-block text-sm underline underline-offset-4"
-            style={{ color: "var(--fg-muted)" }}
+            Save your card
+          </button>
+          <button
+            onClick={onShare}
+            className="px-6 py-3 rounded-lg font-medium text-sm border transition-opacity hover:opacity-90"
+            style={{
+              borderColor: "var(--accent)",
+              color: "var(--accent)",
+              backgroundColor: "transparent",
+            }}
           >
-            Try another date
-          </a>
+            Share
+          </button>
+        </div>
 
-          <p
-            className="text-xs"
-            style={{ color: "var(--fg-muted)", opacity: 0.7 }}
-          >
-            No account needed. Nothing is stored.
-          </p>
-        </section>
-      )}
+        <a
+          href="/"
+          className="inline-block text-sm underline underline-offset-4"
+          style={{ color: "var(--fg-muted)" }}
+        >
+          Try another date
+        </a>
+
+        <p
+          className="text-xs"
+          style={{ color: "var(--fg-muted)", opacity: 0.7 }}
+        >
+          No account needed. Nothing is stored.
+        </p>
+      </RevealSection>
     </div>
   );
 }
 
-/* ─── Numbers sub-component (needs hooks at top level) ─── */
+/* ─── Numbers sub-component (counter starts when scrolled into view) ─── */
 
 function NumbersSection({
   birthsPerDay,
@@ -542,69 +551,75 @@ function NumbersSection({
   birthsPerDay: number;
   deathsPerDay: number;
 }) {
-  const births = useCountUp(birthsPerDay, 2000, true);
-  const deaths = useCountUp(deathsPerDay, 2000, true);
+  const { ref, inView } = useInView(0.2);
+  const births = useCountUp(birthsPerDay, 2000, inView);
+  const deaths = useCountUp(deathsPerDay, 2000, inView);
 
   return (
-    <section
-      className="animate-fade-slide-up rounded-xl p-6 md:p-8"
-      style={{
-        background: "rgba(5, 150, 105, 0.04)",
-        borderLeft: "3px solid var(--life)",
-      }}
+    <div
+      ref={ref}
+      className={`scroll-reveal reveal-fade-up ${inView ? "in-view" : ""}`}
     >
-      <div className="flex items-center gap-2 mb-6">
-        <span
-          className="w-2 h-2 rounded-full"
-          style={{ backgroundColor: "var(--life)" }}
-        />
-        <span
-          className="font-mono text-xs font-semibold uppercase tracking-[0.15em]"
-          style={{ color: "var(--fg-muted)" }}
-        >
-          THE NUMBERS
-        </span>
-      </div>
-      <div className="grid grid-cols-2 gap-8">
-        <div className="space-y-2 text-center">
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              color: "var(--life)",
-              fontSize: "clamp(2rem, 8vw, 3.5rem)",
-              fontWeight: 600,
-              lineHeight: 1.1,
-            }}
-          >
-            {births.toLocaleString()}
-          </div>
-          <p
-            className="text-sm"
+      <section
+        className="rounded-xl p-6 md:p-8"
+        style={{
+          background: "rgba(5, 150, 105, 0.04)",
+          borderLeft: "3px solid var(--life)",
+        }}
+      >
+        <div className="flex items-center gap-2 mb-6">
+          <span
+            className="w-2 h-2 rounded-full"
+            style={{ backgroundColor: "var(--life)" }}
+          />
+          <span
+            className="font-mono text-xs font-semibold uppercase tracking-[0.15em]"
             style={{ color: "var(--fg-muted)" }}
           >
-            took their first breath
-          </p>
+            THE NUMBERS
+          </span>
         </div>
-        <div className="space-y-2 text-center">
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              color: "var(--death)",
-              fontSize: "clamp(2rem, 8vw, 3.5rem)",
-              fontWeight: 600,
-              lineHeight: 1.1,
-            }}
-          >
-            {deaths.toLocaleString()}
+        <div className="grid grid-cols-2 gap-8">
+          <div className="space-y-2 text-center">
+            <div
+              style={{
+                fontFamily: "var(--font-display)",
+                color: "var(--life)",
+                fontSize: "clamp(2rem, 8vw, 3.5rem)",
+                fontWeight: 600,
+                lineHeight: 1.1,
+              }}
+            >
+              {births.toLocaleString()}
+            </div>
+            <p
+              className="text-sm"
+              style={{ color: "var(--fg-muted)" }}
+            >
+              took their first breath
+            </p>
           </div>
-          <p
-            className="text-sm"
-            style={{ color: "var(--fg-muted)" }}
-          >
-            took their last
-          </p>
+          <div className="space-y-2 text-center">
+            <div
+              style={{
+                fontFamily: "var(--font-display)",
+                color: "var(--death)",
+                fontSize: "clamp(2rem, 8vw, 3.5rem)",
+                fontWeight: 600,
+                lineHeight: 1.1,
+              }}
+            >
+              {deaths.toLocaleString()}
+            </div>
+            <p
+              className="text-sm"
+              style={{ color: "var(--fg-muted)" }}
+            >
+              took their last
+            </p>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }

@@ -167,6 +167,32 @@ body {
   animation: svgDraw 1.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* Scroll-triggered animation: hidden by default, animate when .in-view is added */
+.scroll-reveal {
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.scroll-reveal.in-view.reveal-fade-up {
+  animation: fadeSlideUp 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.scroll-reveal.in-view.reveal-scale-blur {
+  animation: scaleBlurIn 600ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.scroll-reveal.in-view.reveal-slide-left {
+  animation: slideFromLeft 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.scroll-reveal.in-view.reveal-slide-right {
+  animation: slideFromRight 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.scroll-reveal.in-view.reveal-slow-fade {
+  animation: slowFade 1000ms ease-out both;
+}
+
 /* Safe area for mobile */
 .pb-safe {
   padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
@@ -179,5 +205,9 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .scroll-reveal {
+    opacity: 1 !important;
   }
 }

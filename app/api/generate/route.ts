@@ -142,7 +142,10 @@ export async function POST(request: NextRequest) {
   }
 
   const now = new Date();
-  if (parsedDate > now) {
+  // Compare date-only (ignore time) to avoid timezone edge cases
+  const parsedDay = new Date(Date.UTC(parsedDate.getUTCFullYear(), parsedDate.getUTCMonth(), parsedDate.getUTCDate()));
+  const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  if (parsedDay > today) {
     return NextResponse.json(
       { error: "Date cannot be in the future." },
       { status: 400 }
