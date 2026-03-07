@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ImageResponse } from "next/og";
 import type { BriefingData } from "@/lib/types";
+
+export const runtime = "edge";
 
 // In-memory store for briefing data (used for card generation)
 const briefingStore = new Map<string, BriefingData>();
@@ -18,8 +21,6 @@ export async function POST(
   try {
     const data: BriefingData = await request.json();
     briefingStore.set(hash, data);
-
-    const { ImageResponse } = await import("@vercel/og");
 
     const formattedDate = new Date(data.date + "T12:00:00").toLocaleDateString(
       "en-US",

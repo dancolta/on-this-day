@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ImageResponse } from "next/og";
+
+export const runtime = "edge";
 
 export async function GET(
   _request: NextRequest,
@@ -7,8 +10,6 @@ export async function GET(
   const { hash: _hash } = await params;
 
   try {
-    const { ImageResponse } = await import("@vercel/og");
-
     const imageResponse = new ImageResponse(
       (
         <div
